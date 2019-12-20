@@ -1,0 +1,47 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<BuildingItem>
+
+@(Html.DevExpress().BootstrapGridView<BuildingItem>("grid")
+      .Routes(routes => routes
+          .MapRoute(r => r
+              .Action("BuildingsPartialGrid")
+              .Controller("Event")))
+      .ClientSideEvents(events =>
+      {
+          events.BeginCallback("grid_BeginCallback");
+          events.EndCallback("grid_EndCallback");
+          events.RowDblClick("grid_RowDblClick");
+      })
+      .SettingsPager(s => s.PageSize(1000))
+      .SettingsBehavior(s =>
+      {
+          s.AllowFocusedRow(true);
+          s.AllowSelectByRowClick(true);
+          s.AllowSelectSingleRowOnly(true);
+          s.AllowEllipsisInText(true);
+          s.AllowSort(true);
+          s.ProcessFocusedRowChangedOnServer(false);
+          s.ProcessSelectionChangedOnServer(false);
+      })
+      .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+      .SettingsBootstrap(settings => settings.Striped(true))
+      .Columns(columns =>
+      {
+          columns.Add(m => m.id).Caption("Id").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(true);
+          columns.Add(m => m.name).Caption("Название").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(true);
+          columns.Add(m => m.postTown).Caption("Город").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(true);
+      })
+      .KeyFieldName("id", "name")
+      .Settings(settings => settings
+         .ShowFilterRow(true)
+         .ShowFilterRowMenu(true)
+      )
+       .OnBeforeRender((grid, args) =>
+       {
+           grid.JSProperties["cpResult"] = ViewData["result"];
+       })
+      .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+      .Bind(Model)
+)
+

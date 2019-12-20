@@ -1,0 +1,105 @@
+﻿@using Assyst.Controllers
+@using Assyst.HtmlHelpers
+@model IEnumerable<EventItem>
+
+<script type="text/javascript">
+
+    gridEventItem_selectionChanged = function (s, e) {
+    }
+
+    gridEventItem_dblClicked = function () {
+        var rowIndex = gridEventItem.getFocusedRowIndex();
+        var selectedEventKey = gridEventItem.getRowKey(rowIndex);
+        var eventId = getFieldByKey(selectedEventKey, 0);
+        var eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+        addEventTab(eventId, eventFormattedReference);
+    };
+
+    gridEventItem_beginCallback = function (s, e) {
+        $('#refreshStackBtn').addClass('disabled');
+        $('#refreshStackBtn').removeAttr('onclick');
+        var eventType = [];
+        var timerStop = false;
+        var myEvents = false;
+
+        if ($("#chbIncidents").is(":checked")) eventType.push($("#chbIncidents").val());
+        if ($("#chbProblems").is(":checked")) eventType.push($("#chbProblems").val());
+        if ($("#chbChanges").is(":checked")) eventType.push($("#chbChanges").val());
+        if ($("#chbTasks").is(":checked")) eventType.push($("#chbTasks").val());
+        if ($("#chbDecisionTasks").is(":checked")) eventType.push($("#chbDecisionTasks").val());
+        if ($("#chbAuthorizationTasks").is(":checked")) eventType.push($("#chbAuthorizationTasks").val());
+
+        if ($("#chbTimerStop").is(":checked")) timerStop = true;
+        if ($("#chbMyEvents").is(":checked")) myEvents = true;
+
+        e.customArgs["eventType"] = eventType;
+        e.customArgs["timerStop"] = timerStop;
+        e.customArgs["myEvents"] = myEvents;
+        e.customArgs["refresh"] = refreshStackFromDb;
+    }
+
+    gridEventItem_init = function () {
+    }
+
+    gridEventItem_endCallback = function (args) {
+        if (this.cpResult != "success")
+            stackViewMessage.show("warning", this.cpResult, "Исключение");
+        else 
+            stackViewMessage.hide();
+        $('#refreshStackBtn').removeClass('disabled');
+        $('#refreshStackBtn').attr('onclick', 'reloadGrid(true);');
+        reloadTimeSynch(refreshStackFromDb);
+        refreshStackFromDb = false;
+        refreshStack = false;
+    }
+
+    gridEventItem_focusedRowChanged = function () {
+
+    }
+
+    function PeriodicalSynchAssyst() {
+        reloadGrid();
+        reloadTimeSynch();
+    }
+
+    function timedRefresh(timeReloadSynchClient) {
+        var timerId = setInterval(() => PeriodicalSynchAssyst(), timeReloadSynchClient);
+    }
+
+    reloadGrid = function (refresh = false) {
+        if (refreshStack) return;
+        refreshStack = true;
+        refreshStackFromDb = refresh;
+        gridEventItem.refresh();
+    }
+
+    reloadTimeSynch = function (refresh = true) {
+        if (typeof refresh !== 'undefined') $("#TimeSynch").load(location.href + " #TimeSynch>*", "");
+    }
+
+</script>
+
+<div class="row pt-1">
+    <div class="col-12">
+        @Html.CreateMessageView(new ViewMessageSettings("stackViewMessage"))
+    </div>
+</div>
+<div class="row pb-2">
+    <div class="col-md">
+        <button id="refreshStackBtn" class="btn btn-primary  float-right ml-2" title="Подтянуть актуальные данные из assysta" onclick="reloadGrid(true)">
+            <i class="fa fa-lg fa-refresh"></i>
+        </button>
+        <div id="TimeSynch" class="pt-2 float-right" style="font-size:1rem;">
+            <span>
+                cинхронизация с Assyst: @{
+                                            var timeLastSynch = EventController.CacheTimeLastSynchStart.ToString("dd.MM.yyyy HH:mm");
+                                        } @timeLastSynch
+            </span>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        @await Html.PartialAsync("StackPartialGrid", null)
+    </div>
+</div>

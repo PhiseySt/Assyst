@@ -1,0 +1,99 @@
+﻿@using Assyst.Controllers
+@using Assyst.Extensions
+@using DevExpress.AspNetCore
+@using DevExpress.Data
+
+@model List<EventItem>
+
+@(Html.DevExpress().BootstrapGridView<EventItem>("gridEventItem")
+      .KeyFieldName("id", "formattedReference")
+      .Routes(routes => routes
+          .MapRoute(r => r
+              .Action("StackPartialGrid")
+              .Controller("Event")))
+      .ClientSideEvents(events =>
+      {
+          events.Init("gridEventItem_init");
+          events.BeginCallback("gridEventItem_beginCallback");
+          events.EndCallback("gridEventItem_endCallback");
+          events.RowDblClick("gridEventItem_dblClicked");
+          events.FocusedRowChanged("gridEventItem_focusedRowChanged");
+          events.SelectionChanged("gridEventItem_selectionChanged");
+      })
+      .Settings(settings => settings
+          .ShowFilterRow(true)
+          .ShowFilterRowMenu(true)
+      )
+      .SettingsBehavior(s =>
+      {
+          s.AllowFocusedRow(true);
+          s.AllowSelectByRowClick(true);
+          s.AllowSelectSingleRowOnly(true);
+          s.AllowEllipsisInText(true);
+          s.AllowSort(true);
+          s.ProcessFocusedRowChangedOnServer(false);
+          s.ProcessSelectionChangedOnServer(false);
+      })
+      .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+      .SettingsBootstrap(settings => settings.Striped(true))
+      .SettingsPager(s => s.PageSize(1000))
+      .Columns(columns =>
+      {
+          columns.Add(m => m.id).Caption("Id").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false);
+          columns.AddHyperLinkColumn(m => m.id)
+              .PropertiesHyperLinkEdit(p =>
+              {
+                  p.NavigateUrlFormatString("/Event/Monitor/{0}");
+                  p.Target("_blank");
+                  p.TextField("formattedReference");
+              })
+              .Width(80)
+              .Caption("Номер события")
+              .HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.parentEvent.formattedReference).Width(80).Caption("Родит. заявка").HorizontalAlign(HorizontalAlign.Left);
+          columns.AddTimeEditColumn(m => m.timeLeft).Width(80).Caption("Осталось времени").HorizontalAlign(HorizontalAlign.Left);
+          columns.AddDateEditColumn(m => m.lastActionDate).Width(120).Caption("Дата последнего действия").PropertiesDateEdit(r => r.DisplayFormatString("dd.MM.yyyy HH:mm")).HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.affectedUser.name).Caption("Затронутый пользователь").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.department.section.name).Caption("Город").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.room.buildingName).Caption("Здание").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.remarks).Caption("Описание").Width(160).HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.itemA.name).Caption("Объект A").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.itemB.name).Caption("Объект B").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.category.name).Caption("Категория").HorizontalAlign(HorizontalAlign.Left);
+          columns.Add(m => m.assignedServDept.name).Caption("Назначенная группа").HorizontalAlign(HorizontalAlign.Left).Visible(false);
+          columns.Add(m => m.assignedUser.name).Caption("Назначенный специалист").HorizontalAlign(HorizontalAlign.Left);
+      })
+      .OnCustomColumnSort((grid, e) =>
+      {
+          if (e.Column.FieldName == "timeLeft")
+          {
+              e.Handled = true;
+              var val1 = e.Value1;
+              var val2 = e.Value2;
+              if (val1 == null)
+              {
+                  e.Result = -1;
+              }
+
+              if (val2 == null)
+              {
+                  e.Result = 1;
+              }
+
+              if (val2 != null && val1 != null)
+              {
+                  var s1 = EventExtensions.GetTimeLeft(e.Value1.ToString());
+                  var s2 = EventExtensions.GetTimeLeft(e.Value2.ToString());
+                  e.Result = Comparer<long>.Default.Compare(s1, s2);
+              }
+          }
+      })
+      .OnBeforeRender((grid, args) =>
+      {
+          grid.JSProperties["cpResult"] = ViewData["result"];
+      })
+      .Bind(Model))
+
+
+
+

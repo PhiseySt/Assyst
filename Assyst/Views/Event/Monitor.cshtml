@@ -1,0 +1,181 @@
+﻿@using Assyst.Controllers
+@using DevExpress.AspNetCore
+
+@model IEnumerable<EventItem>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Fixes dropdown menus placed on the right side */
+    .ml-auto {
+        left: auto !important;
+        right: 0;
+    }
+
+    .container {
+        margin-top: 10px;
+    }
+
+    .nav-tabs > li {
+        position: relative;
+    }
+
+        .nav-tabs > li > a {
+            display: inline-block;
+        }
+
+        .nav-tabs > li > i {
+            cursor: pointer;
+            position: absolute;
+            right: 17px;
+            top: 13px;
+            color: #73818f;
+        }
+
+    .iframe_detail {
+    }
+</style>
+
+<script type="text/javascript">
+
+    // id и psevdoId выбранного на гриде StackPartialGrid события
+    var selectedEventId, selectedEventPsevdoId;
+
+    @{
+       var timeReloadSynch = @AppConfig.AssystSynchronizationTime/2;
+     }
+    var timeReloadSynchClient = @timeReloadSynch;
+
+    var refreshStackFromDb = false;
+    var refreshStack = false;
+
+
+    $(document).ready(function () {
+        if (@ViewData["eventId"] > 0)
+            addEventTab(@ViewData["eventId"], '@ViewData["formattedReference"]');
+        else 
+            reloadGrid();
+
+    });
+
+    window.onload = function(e) {
+        timedRefresh(timeReloadSynchClient);
+    }
+
+    var addTypeAction = null;
+
+    addEventTab = function(eventId, eventFormattedReference, affectedUserId, remarks, typeAction) {
+        addTypeAction = typeAction;
+        if ($('#tab_' + eventId).length == 0) {
+            var li = '<li class="nav-item"><a class="nav-link" style="padding-right:38px;" href="#tab_' +
+                eventId +
+                '" role="tab" data-toggle="tab" onclick="clickEventTab(' + eventId + ')" data-typeTab="event" data-eventId=' +
+                eventId +
+                ' data-eventFormattedReference=' +
+                eventFormattedReference +
+                '>' +
+                eventFormattedReference +
+                '</a> <i title="Удалить вкладку" onclick="removeEventTab(' +
+                eventId +
+                ')" class="close-btn fa fa-lg fa-remove"></i></li>';
+            if ($('#tab_0').length == 0)
+                $('#tab-list li:eq(1)').after($(li));
+            else {
+                $('#tab-list li:eq(2)').after($(li));
+            }
+            $('#tab-content').append($('<div class="tab-pane fade position-relative" id="tab_' +
+                eventId +
+                '" role="tabpanel"><div class="embed-responsive embed-responsive-16by9"><iframe  class="iframe_detail" id="iframe_' +
+                eventId +
+                '" class= "embed-responsive-item"></iframe></div><div class="loadingPanel"><div class= "spinner-border" style = "position: fixed; left: 50%; top: 50%"></div></div></div>'));
+        }
+        $('#iframe_' + eventId).on('load',
+            function() {
+                hideTabLoadingPanel("tab_" + eventId);
+                reloadGrid();
+                if (addTypeAction != null || addTypeAction != undefined) {
+                    $('#iframe_' + eventId).contents().find("#" + addTypeAction).click();
+                    addTypeAction = null;
+                }
+            });
+        var src = eventId > 0
+            ? '/Event/EventsEdit/' + eventId
+            : '/Event/EventsIncidentAdd?affectedUserId=' +
+            (affectedUserId != null ? affectedUserId : "") +
+            '&remarks=' +
+            (remarks != null ? remarks : "");
+        showTabLoadingPanel("tab_" + eventId);
+        $('#iframe_' + eventId).attr('src', src);
+        $('[href="#tab_' + eventId + '"]').tab('show');
+
+    };
+
+    updateNewEventTab = function(eventId, eventFormattedReference) {
+        $('[href="#tab_0"]').parent().remove();
+        $('#tab_0').remove();
+        addEventTab(eventId, eventFormattedReference);
+    };
+
+    removeEventTab = function(eventId) {
+        updateAffectedUser();
+        $('[href="#tab_' + eventId + '"]').parent().remove();
+        $('#tab_' + eventId).remove();
+        $('[href="#stack"]').tab('show');
+    };
+
+    updateAffectedUser = function (affectedUser) {
+        if (affectedUser != null && affectedUser.name != null && affectedUser.name != "")
+            $('#info_affectedUser_name').html(affectedUser.name);
+        else 
+            $('#info_affectedUser_name').html("");
+        if (affectedUser != null && affectedUser.shortCode != null &&  affectedUser.shortCode != "")
+            $('#info_affectedUser_shortCode').html("тн: " + affectedUser.shortCode);
+        else 
+            $('#info_affectedUser_shortCode').html("");
+        if (affectedUser != null && affectedUser.emailAddress != null &&  affectedUser.emailAddress != "")
+            $('#info_affectedUser_emailAddress').html('<a href="mailto: "' + affectedUser.emailAddress + '">' + affectedUser.emailAddress + '</a>');
+        else
+            $('#info_affectedUser_emailAddress').html('');
+    };
+
+    clickEventTab = function (eventId) {
+
+        var infoPanel = $('#iframe_' + eventId)[0].contentWindow["infoPanel"];
+        updateAffectedUser(infoPanel.affectedUser);
+    };
+
+
+</script>
+
+<div class="row pt-4">
+    <div class="col-12">
+        <ul class="nav nav-tabs" role="tablist" id="tab-list">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#stack" onclick="updateAffectedUser();" role="tab" data-typeTab="stack" aria-controls="stack">Стек</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#search" role="tab" onclick="updateAffectedUser();" data-typeTab="search" aria-controls="search">Поиск</a>
+            </li>
+        </ul>
+        <div class="tab-content mb-4" id="tab-content">
+            <div class="tab-pane active show position-relative" id="stack" role="tabpanel">
+                <div id="StackEventsParticalTabContainer" style="width: 100%">
+                    @await Html.PartialAsync("~/Views/Event/StackEventsParticalTab.cshtml", null)
+                </div>
+                <div class="loadingPanel">
+                    <div class="spinner-border" style="position: fixed; left: 50%; top: 50%"></div>
+                </div>
+            </div>
+            <div class="tab-pane  position-relative" id="search" role="tabpanel">
+                <div id="SearchEventsParticalTabContainer" style="width: 100%">
+                    @await Html.PartialAsync("~/Views/Event/SearchEventsParticalTab.cshtml", null)
+                </div>
+                <div class="loadingPanel">
+                    <div class="spinner-border" style="position: fixed; left: 50%; top: 50%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,573 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+
+@model EventItem
+
+@{
+    Layout = "_Layout_Event";
+    }
+<style type="text/css">
+    .dropdownItemHidden {
+        display: none;
+    }
+</style>
+
+<script type="text/javascript">
+
+    var isChanged = false;
+
+    checkAllowedAssignExecution = function() {
+
+        // Проверка возможности эскалации заявки
+
+        // Запретные значение
+        // Продукт: Неизвестный / NULL
+        // Классификатор: Объект не указан
+        // item b: No system / NULL
+        // Категория: Автоназначение / Новая / NULL
+
+        var event = {
+            productId: @Model.itemA?.product?.id,
+            itemAId: @Model.itemA?.id,
+            itemBId: @Model.itemB?.id,
+            categoryId: @Model.category?.id
+        };
+
+        if (@ViewData["EditFormTemplateId"] == 1) {
+            event.productId = buttonEdit_productId.getValue();
+            event.itemAId = buttonEdit_itemAId.getValue();
+            event.itemBId = buttonEdit_itemBId.getValue();
+            event.categoryId = categoryId.getValue();
+        };
+
+        if (
+            event.productId != null &&
+            event.productId !== 477 && // Неизвестный 
+            event.itemAId !== null &&
+            event.itemAId !== 174091 && // Объект не указан
+            event.itemAId !== 899004 && // No system
+            event.itemBId !== null && // Неизвестный
+            event.itemBId !== 899004 && // No system
+            event.categoryId !== null &&
+            event.categoryId !== 510 && // Автоназначение
+            event.categoryId !== 64  // Новая
+        )
+            return true;
+        else
+            return false;
+    };
+
+    var infoPanel = {
+        affectedUser : {
+            name: '@Model.affectedUser?.name',
+            shortCode: '@Model.affectedUser?.shortCode',
+            emailAddress: '@Model.affectedUser?.emailAddress'
+        }
+    };
+
+    setIsChanged = function(val) {
+        isChanged = val;
+    }
+
+    setVisibleDropdownItem = function () {
+        if (@Model.eventStatus != 1) {
+            $('#firstCall').addClass('dropdownItemHidden');
+            $('#secondCall').addClass('dropdownItemHidden');
+            $('#thirdCall').addClass('dropdownItemHidden');
+            $('#callManagement').addClass('dropdownItemHidden');
+            $('#errorExplanation').addClass('dropdownItemHidden');
+            $('#discussionRequired').addClass('dropdownItemHidden');
+            $('#assignExecution').addClass('dropdownItemHidden');
+            $('#inWork').addClass('dropdownItemHidden');
+            $('#additionalInformation').addClass('dropdownItemHidden');
+            $('#hasExecuted').addClass('dropdownItemHidden');
+            $('#reOpen').removeClass('dropdownItemHidden');
+            $('#makeСritical').addClass('dropdownItemHidden');
+            $('#decidedSupplier').addClass('dropdownItemHidden');
+        } else {
+            $('#firstCall').removeClass('dropdownItemHidden');
+            $('#secondCall').removeClass('dropdownItemHidden');
+            $('#thirdCall').removeClass('dropdownItemHidden');
+            $('#callManagement').removeClass('dropdownItemHidden');
+            $('#errorExplanation').removeClass('dropdownItemHidden');
+            $('#discussionRequired').removeClass('dropdownItemHidden');
+            if (checkAllowedAssignExecution() === true)
+                $('#assignExecution').removeClass('dropdownItemHidden');
+            else
+                $('#assignExecution').addClass('dropdownItemHidden');
+            $('#inWork').removeClass('dropdownItemHidden');
+            $('#additionalInformation').removeClass('dropdownItemHidden');
+            @if (Model.lastSlaClockStop != null)
+            {
+                <text>
+                    $('#hasExecuted').addClass('dropdownItemHidden');
+                </text>
+            }
+            $('#reOpen').addClass('dropdownItemHidden');
+            $('#makeСritical').removeClass('dropdownItemHidden');
+            $('#decidedSupplier').removeClass('dropdownItemHidden');
+        }
+    }
+
+    gridActionItem_BeginCallback = function(s, e) {
+        e.customArgs["eventId"] = @Model.id;
+    }
+
+    gridActionItem_EndCallback = function() {
+        if (this.cpResult != "success")
+            gridActionsViewMessage.show("warning", this.cpResult, "Исключение");
+        else
+            gridActionsViewMessage.hide();
+    }
+
+    gridActionItem_RowDblClick = function() {
+    }
+
+    gridLinkedEventItem_BeginCallback = function(s, e) {
+        e.customArgs["eventId"] = @Model.id;
+    }
+
+    gridLinkedEventItem_EndCallback = function () {
+        if (this.cpResult != "success")
+            gridLinkedEventsViewMessage.show("warning", this.cpResult, "Исключение");
+        else
+            gridLinkedEventsViewMessage.hide();
+    }
+
+    gridLinkedEventItem_RowDblClick = function(s, e) {
+        var selectedEventKey = gridLinkedEventItem.getRowKey(gridLinkedEventItem.getFocusedRowIndex());
+        var eventId = getFieldByKey(selectedEventKey, 0);
+        var eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+        top.window["addEventTab"](eventId, eventFormattedReference);
+    }
+
+    gridContactUserEventItem_BeginCallback = function(s, e) {
+        e.customArgs["eventId"] = @Model.id;
+    }
+
+    gridContactUserEventItem_EndCallback = function () {
+        if (this.cpResult != "success")
+            gridContactUserEventsViewMessage.show("warning", this.cpResult, "Исключение");
+        else
+            gridContactUserEventsViewMessage.hide();
+    }
+
+    gridContactUserEventItem_RowDblClick = function(s, e) {
+        var selectedEventKey = gridContactUserEventItem.getRowKey(gridContactUserEventItem.getFocusedRowIndex());
+        var eventId = getFieldByKey(selectedEventKey, 0);
+        var eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+        top.window["addEventTab"](eventId, eventFormattedReference);
+    }
+
+    gridAttachmentItem_BeginCallback = function(s, e) {
+        e.customArgs["eventId"] = @Model.id;
+    }
+
+    gridAttachmentItem_EndCallback = function () {
+        if (this.cpResult != "success")
+            gridAttachmentsViewMessage.show("warning", this.cpResult, "Исключение");
+        else
+            gridAttachmentsViewMessage.hide();
+    }
+
+    gridAttachmentItem_RowDblClick = function() {
+    }
+
+    reloadActionsPartialGrid = function() {
+        gridActionItem.refresh();
+    }
+
+    reloadLinkedEventsPartialGrid = function() {
+        gridLinkedEventItem.refresh();
+    }
+
+    reloadContactUserEventsPartialGrid = function() {
+        gridContactUserEventItem.refresh();
+    }
+
+    reloadAttachmentsPartialGrid = function () {
+        gridAttachmentItem.refresh();
+    }
+
+    $(document).ready(function () {
+        top.window.updateAffectedUser(infoPanel.affectedUser);
+    });
+
+    getFieldByKey = function(key, index) {
+        if (key == null) return null;
+        var fields = key.split("|");
+        return fields[index];
+    };
+
+    var nameForm;
+    var activePage = "";
+    var currentTypeAction = "";
+
+    var popupActionAdd;
+
+    popupA_CloseButtonClicked = function (e) {
+        modeAttachment = false;
+        e.hide();
+    }
+
+    getNameForm = function(typeAction) {
+        var result = "#AddSimpleActionForm";
+        switch (typeAction) {
+        case "assignExecution":
+            result = "#AddAssignExecutionForm";
+            break;
+        case "addAttachment":
+            result = "#AddAttachmentActionForm";
+                break;
+        case "addLink":
+            result = "#AddLinkActionForm";
+            break;
+        case "hasExecuted":
+        case "makeСritical":
+            result = "#AddHasExecutedActionForm";
+            break;
+        }
+        return result;
+    }
+
+    popupA_SaveButtonClicked = function(e) {
+
+        var iframes = e.getFrames();
+        var contentWindow = iframes[0].contentWindow;
+        contentWindow.showLoadingPanel();
+        contentWindow.ckEditorToTextArea('richRemarks.content');
+
+        iframes.contents().find(nameForm).ajaxSubmit({
+            success: function (data) {
+                e.hide();
+                contentWindow.hideLoadingPanel();
+                if (modeAttachment == true) {
+                    modeAttachment = false;
+                    reloadAttachmentsPartialGrid();
+                    reloadActionsPartialGrid();
+                }
+                else {
+                    submitButton_Click();
+                }
+                modeAttachment = false;
+                top.window["reloadGrid"]();
+            },
+            error: function(data) {
+                contentWindow.hideLoadingPanel();
+                if (data != null && data.responseText != null)
+                    contentWindow["viewMessage"].show("warning", data.responseText, "Исключение");
+            }
+        });
+    }
+
+    startPopupAction = function(url, headerText, width, height) {
+        popupActionAdd = createPopup(
+            {
+                name: "popupA",
+                contentUrl: url,
+                width: width,
+                height: height,
+                headerText: headerText,
+                showFooter: true,
+                submitButtonClickEvent: "popupA_SaveButtonClicked",
+                closeButtonClickEvent: "popupA_CloseButtonClicked"
+            }
+        );
+        popupActionAdd.show();
+    }
+
+    var modeAttachment = false;
+
+    addAction = function(typeAction, eventId, assignedServDeptId, itemBId, objectNameB) {
+        if (isChanged == true && typeAction != "addAttachment") {
+            top.window.popups.saveChanged(
+                "У вас есть несохраненные изменения. Вы хотите сохранить эти изменения прежде чем продолжить?",
+                function() {
+                    submitButton_Click(typeAction);
+                },
+                function() {
+                    cancelButton_Click(typeAction);
+                }
+            );
+            return false;
+        };
+
+        var url = "/Event/ActionSimpleFormAdd?";
+        var urlSuffix;
+        var actionTypeId = "";
+        var headerText;
+        var width;
+        var height;
+        nameForm = getNameForm(typeAction);
+        switch (typeAction) {
+        case "firstCall":
+            actionTypeId = "143";
+            headerText = 'Добавить действие - 1 звонок пользователю';
+            width = 900;
+            height = 600;
+            break;
+        case "secondCall":
+            actionTypeId = "144";
+            headerText = 'Добавить действие - 2 звонок пользователю';
+            width = 900;
+            height = 600;
+            break;
+        case "thirdCall":
+            actionTypeId = "145";
+            headerText = 'Добавить действие - 3 звонок пользователю';
+            width = 900;
+            height = 600;
+            break;
+        case "callManagement":
+            actionTypeId = "192";
+            headerText = 'Добавить действие - звонок руководителю';
+            width = 900;
+            height = 600;
+            break;
+        case "errorExplanation":
+            actionTypeId = "186";
+            headerText = 'Добавить действие - обоснование ошибки';
+            width = 900;
+            height = 600;
+            break;
+        case "discussionRequired":
+            actionTypeId = "196";
+            headerText = 'Добавить действие - требуется обсуждение';
+            width = 900;
+            height = 600;
+            break;
+        case "inWork":
+            actionTypeId = "2";
+            headerText = 'Добавить действие - в работе';
+            width = 900;
+            height = 600;
+            break;
+        case "decidedSupplier":
+            actionTypeId = "14";
+            headerText = 'Добавить действие - решено поставщиком';
+            width = 900;
+            height = 600;
+            break;
+        case "additionalInformation":
+            actionTypeId = "214";
+            headerText = 'Добавить действие - запрос доп.инфо';
+            width = 900;
+            height = 600;
+            break;
+        case "assignExecution":
+            actionTypeId = "1";
+            headerText = 'Добавить действие - назначить для выполнения';
+            url = "/Event/ActionAssignExecutionFormAdd?";
+            width = 900;
+            height = 700;
+            break;
+        case "hasExecuted":
+            actionTypeId = "4";
+            headerText = 'Добавить действие - выполнено, ожидает закрытия';
+            urlSuffix = "assignedServDeptId=" +
+                assignedServDeptId +
+                "&causeItemId=" +
+                itemBId +
+                "&causeItemName=" +
+                objectNameB +
+                "&";
+            url = "/Event/ActionHasExecutedFormAdd?" + urlSuffix;
+            width = 900;
+            height = 700;
+            break;
+        case "reOpen":
+            actionTypeId = "6";
+            headerText = 'Добавить действие - переоткрыть';
+            width = 900;
+            height = 600;
+            break;
+        case "makeСritical":
+            actionTypeId = "29";
+            headerText = 'Добавить действие - критичный инцидент';
+            urlSuffix = "causeItemId=" + itemBId + "&causeItemName=" + objectNameB + "&";
+            url = "/Event/ActionHasExecutedFormAdd?" + urlSuffix;
+            width = 900;
+            height = 700;
+            break;
+        case "addAttachment":
+            $('[href="#attachmentEvents"]').tab('show');
+            modeAttachment = true;
+            actionTypeId = "5000054";
+            headerText = 'Добавить действие - добавить вложение';
+            url = "/Event/ActionAddAttachment?";
+            width = 900;
+            height = 600;
+            break;
+            case "addLink":
+                actionTypeId = "5000022";
+                headerText = 'Связывание событий';
+                url = "/Event/ActionAddLink?";
+                width = 900;
+                height = 600;
+            break;
+        }
+
+        url = url + "eventId=" + eventId + "&actionTypeId=" + actionTypeId;
+        currentTypeAction = actionTypeId;
+
+        startPopupAction(url, headerText, width, height);
+
+    };
+
+    submitButton_Click = function (typeAction) {
+        ckEditorToTextArea('richRemarks.content');
+        top.window["showTabLoadingPanel"]("tab_" + @Model.id);
+
+        $("#EditForm").ajaxSubmit({
+            success: function (data) {
+                setIsChanged(false);
+                top.window["hideTabLoadingPanel"]("tab_" + @Model.id);
+                top.window["addEventTab"](@Model.id, "@Model.formattedReference", null, null, typeAction);
+                top.window["reloadGrid"]();
+            },
+            error: function (data) {
+                top.window["hideTabLoadingPanel"]("tab_" + @Model.id);
+                if (data != null && data.responseText != null)
+                    viewMessage.show("warning", data.responseText, "Исключение");
+            }
+        });
+    };
+
+    cancelButton_Click = function (typeAction) {
+        setIsChanged(false);
+        top.window["addEventTab"](@Model.id, "@Model.formattedReference", null, null, typeAction);
+    };
+
+</script>
+
+<div class="row pt-1 pb-2">
+    <div class="col-md-7">
+        @(Html.DevExpress()
+                                      .BootstrapHyperLink("EventHyperLink")
+                                      .NavigateUrl("/Event/Monitor/" + Model.id)
+                                      .Text(Model.formattedReference)
+                                      .Target("_blank")
+        ) (@Model.eventStatusName) @Model.eventTypeName @{
+            var resolutionDue = (int)Model.eventStatus == 1 && Model.resolutionDue.Year != 1 ? ", время SLA : " + Model.resolutionDue.ToString("dd.MM.yyyy HH:mm") : "";
+            var timeLeftMessage = (int)Model.eventStatus == 1 ? ", осталось времени : " + (Model.lastSlaClockStop == null ? Model.timeLeft : "таймер остановлен") : null;
+        } @timeLeftMessage @resolutionDue
+    </div>
+    <div class="col-md-5">
+        <button class="btn btn-primary fa-lg float-right ml-2" title="обновить событие" onclick="cancelButton_Click()">
+            <i class="fa fa-refresh"></i>
+        </button>
+        <button class='btn btn-primary fa-lg float-right ml-2' title="сохранить событие" onclick="submitButton_Click()">
+            <i class="fa fa-save"></i>
+        </button>
+        <button class="btn btn-primary fa-lg float-right ml-2" title="привязать событие" onclick="addAction('addLink', @Model.id)">
+            <i class="fa fa-link"></i>
+        </button>
+        <button class="btn btn-primary fa-lg float-right ml-2" title="добавить вложение" onclick="addAction('addAttachment', @Model.id)">
+            <i class="fa fa-paperclip "></i>
+        </button>
+        <button class="btn btn-primary fa-lg  float-right ml-2 dropdown-toggle" title="добавить действие" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true" onclick="setVisibleDropdownItem()">
+            <i class="fa fa-bolt fa-sm"></i>
+        </button>
+        <div class="dropdown-menu">
+            <a id="firstCall" class="dropdown-item" onclick="addAction('firstCall', @Model.id)">1 звонок пользователю</a>
+            <a id="secondCall" class="dropdown-item" onclick="addAction('secondCall', @Model.id)">2 звонок пользователю</a>
+            <a id="thirdCall" class="dropdown-item" onclick="addAction('thirdCall', @Model.id)">3 звонок пользователю</a>
+            <a id="callManagement" class="dropdown-item" onclick="addAction('callManagement', @Model.id)">звонок руководителю</a>
+            <a id="errorExplanation" class="dropdown-item" onclick="addAction('errorExplanation', @Model.id)">обоснование ошибки</a>
+            <a id="discussionRequired" class="dropdown-item" onclick="addAction('discussionRequired', @Model.id)">требуется обсуждение</a>
+            <a id="assignExecution" class="dropdown-item" onclick="addAction('assignExecution', @Model.id)">назначить для выполнения</a>
+            <a id="inWork" class="dropdown-item" onclick="addAction('inWork', @Model.id)">в работе</a>
+            <a id="decidedSupplier" class="dropdown-item" onclick="addAction('decidedSupplier', @Model.id)">решено поставщиком</a>
+            <a id="additionalInformation" class="dropdown-item" onclick="addAction('additionalInformation', @Model.id)">запрос доп.инфо</a>
+            <a id="hasExecuted" class="dropdown-item" onclick="addAction('hasExecuted', @Model.id, @Model.assignedServDeptId, @Model.itemBId, '@Model.itemB?.name')">выполнено, ожидает закрытия</a>
+            <a id="reOpen" class="dropdown-item" onclick="addAction('reOpen', @Model.id)">переоткрыть</a>
+            <a id="makeСritical" class="dropdown-item" onclick="addAction('makeСritical', @Model.id, @Model.assignedServDeptId, @Model.itemBId, '@Model.itemB?.name')">критичный инцидент</a>
+        </div>
+    </div>
+</div>
+<ul class="nav nav-pills" role="tablist">
+    <li class="nav-item dropdown">
+        <a class="nav-link active" data-toggle="tab" href="#event" role="tab" aria-controls="event">Подробно</a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="tab" href="#actions" role="tab" aria-controls="actions">Действия</a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="tab" href="#linkEvents" role="tab" aria-controls="linkEvents">Связанные события</a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="tab" href="#userEvents" role="tab" aria-controls="userEvents">События пользователя</a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="tab" href="#attachmentEvents" role="tab" aria-controls="userEvents">Вложения</a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane active" id="event" role="tabpanel">
+        <div class="row pt-3">
+            <div class="col-md">
+                @await Html.PartialAsync("~/Views/Event/Event" + ViewData["EditFormTemplateId"] + "PartialEditForm.cshtml")
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="actions" role="tabpanel">
+        <div class="row pt-1">
+            <div class="col-12">
+                @Html.CreateMessageView(new ViewMessageSettings("gridActionsViewMessage"))
+            </div>
+        </div>
+        <div class="row pt-4">
+            <div class="col-md">
+                @await Html.PartialAsync("~/Views/Event/ActionsPartialGrid.cshtml", ViewData["Actions"])
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="linkEvents" role="tabpanel">
+        <div class="row pt-1">
+            <div class="col-12">
+                @Html.CreateMessageView(new ViewMessageSettings("gridLinkedEventsViewMessage"))
+            </div>
+        </div>
+        <div class="row pt-4">
+            <div class="col-md">
+                @await Html.PartialAsync("~/Views/Event/LinkedEventsPartialGrid.cshtml", ViewData["LinkedEvents"])
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="userEvents" role="tabpanel">
+        <div class="row pt-1">
+            <div class="col-12">
+                @Html.CreateMessageView(new ViewMessageSettings("gridContactUserEventsViewMessage"))
+            </div>
+        </div>
+        <div class="row pt-4">
+            <div class="col-md">
+                @await Html.PartialAsync("~/Views/Event/ContactUserEventsPartialGrid.cshtml", ViewData["AffectedUserEvents"])
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane" id="attachmentEvents" role="tabpanel">
+        <div class="row pt-1">
+            <div class="col-12">
+                @Html.CreateMessageView(new ViewMessageSettings("gridAttachmentsViewMessage"))
+            </div>
+        </div>
+        <div class="row pt-4">
+            <div class="col-md">
+                @await Html.PartialAsync("~/Views/Event/AttachmentsPartialGrid.cshtml", ViewData["Attachments"])
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+

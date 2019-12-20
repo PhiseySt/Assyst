@@ -1,0 +1,47 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<DepartmentItem>
+
+@(Html.DevExpress().BootstrapGridView<DepartmentItem>("grid")
+      .Routes(routes => routes
+          .MapRoute(r => r
+              .Action("DepartmentsPartialGrid")
+              .Controller("Event")))
+      .ClientSideEvents(events =>
+      {
+          events.BeginCallback("grid_BeginCallback");
+          events.EndCallback("grid_EndCallback");
+          events.RowDblClick("grid_RowDblClick");
+      })
+      .SettingsBehavior(s =>
+      {
+          s.AllowFocusedRow(true);
+          s.AllowSelectByRowClick(true);
+          s.AllowSelectSingleRowOnly(true);
+          s.AllowEllipsisInText(true);
+          s.AllowSort(true);
+          s.ProcessFocusedRowChangedOnServer(false);
+          s.ProcessSelectionChangedOnServer(false);
+      })
+      .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+      .SettingsBootstrap(settings => settings.Striped(true))
+      .SettingsPager(s => s.PageSize(1000))
+      .Columns(columns =>
+      {
+          columns.Add(m => m.id).Caption("Id").HorizontalAlign(HorizontalAlign.Left).Visible(false);
+          columns.Add(m => m.name).Caption("Название").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).Visible(true);
+          columns.Add(m => m.section.name).Caption("Управление").HorizontalAlign(HorizontalAlign.Left).Visible(true);
+      })
+      .KeyFieldName("id", "name")
+      .Settings(settings => settings
+          .ShowFilterRow(true)
+          .ShowFilterRowMenu(true)
+      )
+      .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+       .OnBeforeRender((grid, args) =>
+       {
+           grid.JSProperties["cpResult"] = ViewData["result"];
+       })
+      .Bind(Model)
+)
+

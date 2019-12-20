@@ -1,0 +1,96 @@
+﻿@using Assyst.HtmlHelpers
+
+@model ActionItem
+
+@{
+    Layout = "_Layout_Popup";
+}
+
+<form asp-action="ActionHasExecutedFormAdd" name="AddHasExecutedActionForm" id="AddHasExecutedActionForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div id="newAction">
+        <div class="row">
+            <div class="form-group col-12">
+                <label class="control-label">Информационная система</label>
+                <input value="@Model.causeItem.name" class="form-control" readonly="readonly" />
+            </div>
+        </div>
+        @{
+
+            if (Model.actionType.id != 29) // для действия "сделать критичным отдел не показываем"
+            {
+                <div class="row">
+                    <div class="form-group col-12">
+                        <label asp-for="assignedServDeptId" class="control-label">Назначенная группа</label>
+                        <input class="form-control" value="@Model.assignedServDept?.name" readonly="readonly" />
+                        <input asp-for="assignedServDeptId" class="form-control" hidden="hidden" readonly="readonly" />
+                        <span asp-validation-for="assignedServDeptId" class="text-danger"></span>
+                    </div>
+                </div>
+            }
+
+        }
+        <div class="row">
+            <div class="form-group col-12">
+                <label asp-for="causeCategoryId" class="control-label">Причина события</label>
+                @Html.CreateButtonEdit("causeCategoryId", "Categories", "Выбор причины события", Model.causeCategory?.id, Model.causeCategory?.name)
+                <span asp-validation-for="causeCategoryId" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-12">
+                <label asp-for="richRemarks.content" class="control-label">Описание</label>
+                <textarea asp-for="richRemarks.content" id="richRemarks.content" class="form-control"></textarea>
+                <script type="text/javascript">
+                CKEDITOR.replace('richRemarks.content');
+                </script>
+                <span asp-validation-for="richRemarks.content" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="d-none">
+            <label asp-for="eventId" class="control-label">Номер</label>
+            <input asp-for="eventId" class="form-control" readonly="readonly" hidden="hidden" />
+            <span asp-validation-for="eventId" class="text-danger"></span>
+        </div>
+        <div class="d-none">
+            <label asp-for="actionType.id" class="control-label">Id типа действия</label>
+            <input asp-for="actionType.id" class="form-control" readonly="readonly" />
+            <span asp-validation-for="actionType.id" class="text-danger"></span>
+        </div>
+        <div class="d-none">
+            <label asp-for="causeItemId" class="control-label">Id Информационной системы</label>
+            <input asp-for="causeItemId" class="form-control" readonly="readonly" />
+            <span asp-validation-for="causeItemId" class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

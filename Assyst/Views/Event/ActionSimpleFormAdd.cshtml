@@ -1,0 +1,60 @@
+﻿@model ActionItem
+
+@{
+    Layout = "_Layout_Popup";
+}
+
+<form asp-action="ActionSimpleFormAdd" name="AddSimpleActionForm" id="AddSimpleActionForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div id="newAction">
+        <div class="form-group">
+            <label asp-for="richRemarks.content" class="control-label">Описание</label>
+            <textarea asp-for="richRemarks.content" id="richRemarks.content" class="form-control"></textarea>
+            <script type="text/javascript">
+                CKEDITOR.replace('richRemarks.content');
+            </script>
+            <span asp-validation-for="richRemarks.content" class="text-danger"></span>
+        </div>
+        <div class="d-none">
+            <label asp-for="eventId" class="control-label">Номер</label>
+            <input asp-for="eventId" class="form-control" readonly="readonly" />
+            <span asp-validation-for="eventId" class="text-danger"></span>
+        </div>
+        <div class="d-none">
+            <label asp-for="actionType.id" class="control-label">Id типа действия</label>
+            <input asp-for="actionType.id" class="form-control" readonly="readonly" />
+            <span asp-validation-for="actionType.id" class="text-danger"></span>
+        </div>
+    </div>
+
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

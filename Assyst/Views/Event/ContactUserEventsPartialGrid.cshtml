@@ -1,0 +1,59 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<EventItem>
+
+@(Html.DevExpress().BootstrapGridView<EventItem>("gridContactUserEventItem")
+    .Routes(routes => routes
+        .MapRoute(r => r
+            .Action("ContactUserEventsPartialGrid")
+            .Controller("Event")))
+    .ClientSideEvents(events =>
+    {
+        events.BeginCallback("gridContactUserEventItem_BeginCallback");
+        events.EndCallback("gridContactUserEventItem_EndCallback");
+        events.RowDblClick("gridContactUserEventItem_RowDblClick");
+    })
+    .SettingsPager(s => s.PageSize(1000))
+    .SettingsBehavior(s =>
+    {
+        s.AllowFocusedRow(true);
+        s.AllowSelectByRowClick(true);
+        s.AllowSelectSingleRowOnly(true);
+        s.AllowEllipsisInText(true);
+        s.AllowSort(true);
+        s.ProcessFocusedRowChangedOnServer(false);
+        s.ProcessSelectionChangedOnServer(false);
+    })
+    .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+    .SettingsBootstrap(settings => settings.Striped(true))
+    .Columns(columns =>
+    {
+        columns.Add(m => m.id).Width(80).Caption("Id").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false);
+        columns.AddHyperLinkColumn(m => m.id)
+            .PropertiesHyperLinkEdit(p =>
+            {
+                p.NavigateUrlFormatString("/Event/Monitor/{0}");
+                p.Target("_blank");
+                p.TextField("formattedReference");
+            })
+            .Width(80)
+            .Caption("Номер события")
+            .HorizontalAlign(HorizontalAlign.Left);
+        columns.AddTimeEditColumn(m => m.timeLeft).Width(100).Caption("Осталось времени").HorizontalAlign(HorizontalAlign.Left);
+        columns.Add(m => m.affectedUser.name).Caption("Затронутый пользователь").HorizontalAlign(HorizontalAlign.Left);
+        columns.Add(m => m.remarks).Caption("Описание").HorizontalAlign(HorizontalAlign.Left);
+        columns.Add(m => m.assignedUser.name).Caption("Назначенный специалист").HorizontalAlign(HorizontalAlign.Left);
+    })
+    .KeyFieldName("id", "formattedReference")
+    .Settings(settings => settings
+        .ShowFilterRow(true)
+        .ShowFilterRowMenu(true)
+    )
+    .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+    .OnBeforeRender((grid, args) =>
+    {
+        grid.JSProperties["cpResult"] = ViewData["result"];
+    })
+    .Bind(Model)
+)
+

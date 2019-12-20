@@ -1,0 +1,492 @@
+﻿@using Assyst.Controllers
+@using DevExpress.AspNetCore
+@using Newtonsoft.Json
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Assist Helper</title>
+    @{
+        var currentTheme = $"/lib/bootstrap/dist/css/themes/{CustomTheme.CurrentTheme}/bootstrap.min.css?anything=goeshere"; @*anything=goeshere для перезаписи стилей в кэше браузера*@
+        <link rel="stylesheet" href="@currentTheme" />
+    }
+    <link rel="stylesheet" href="~/css/site.css">
+    <link href="~/lib/coreui/css/coreui-icons.min.css" rel="stylesheet">
+    <link href="~/lib/coreui/css/simple-line-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/coreui/css/style.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery/dist/jquery.form.js"></script>
+    <script src="~/lib/coreui/js/popper.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="~/lib/coreui/js/sweetalert.min.js"></script>
+    <script src="~/lib/coreui/js/pace.min.js"></script>
+    <script src="~/lib/coreui/js/perfect-scrollbar.min.js"></script>
+    <script src="~/lib/coreui/js/coreui.min.js"></script>
+    <script src="~/js/alerting.js?13"></script>
+    <script src="~/lib/ckeditor/ckeditor.js"></script>
+    <script src="~/lib/ckeditor/plugins/autogrow/plugin.js"></script>
+    <script src="~/js/site.js"></script>
+    <script src="~/js/popup.js?101"></script>
+    <script src="~/js/viewMessage.js"></script>
+    <style>
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
+    <script type="text/javascript">
+
+    var popup;
+
+    addEvent = function(typeEvent) {
+
+        var eventId,
+            eventFormattedReference,
+            isIncidentOrTask,
+            tab,
+            typeTab;
+
+        tab = $("#tab-list a.active").first();
+        typeTab = tab.attr("data-typeTab");
+
+        switch (typeTab) {
+            case "stack":
+                var selectedEventKey = gridEventItem.getRowKey(gridEventItem.getFocusedRowIndex());
+                eventId = getFieldByKey(selectedEventKey, 0);
+                eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+                break;
+            case "search":
+                var selectedEventKey = gridSearchEventItem.getRowKey(gridSearchEventItem.getFocusedRowIndex());
+                eventId = getFieldByKey(selectedEventKey, 0);
+                eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+            break;
+            case "event":
+                eventId = tab.attr("data-eventId");
+                eventFormattedReference = tab.attr("data-eventFormattedReference");
+            break;
+        };
+
+        isIncidentOrTask = getIsIncidentOrTask(eventFormattedReference);
+
+        switch (typeEvent) {
+            case "incident":
+                addEventTab(0, "Новый инцидент");
+            break;
+        case "consultation":
+            if (eventId == null || eventId == 0) {
+                popups.infomessage("Консультации создаются на основе выбранного события.");
+                return;
+            };
+            popup = createPopup(
+                {
+                    name: "popupConsultationAdd",
+                    contentUrl: "/Event/EventsConsultationAdd/" + eventId,
+                    width: 900,
+                    height: 750,
+                    headerText: 'Добавить событие - консультацию',
+                    showFooter: true,
+                    submitButtonClickEvent: "popup_submitButtonClick",
+                    closeButtonClickEvent: "popup_closeButtonClick"
+                }
+            );
+            popup.show();
+            break;
+        case "complaint":
+                if (eventId == null || eventId == 0) {
+                popups.infomessage("Жалобы создаются на основе выбранного события.");
+                return;
+            };
+            if (!isIncidentOrTask) {
+                popups.infomessage("Жалобы создаются только на основе выбранного события (с типом инцидент или T-задача).");
+                return;
+            };
+            popup = createPopup(
+                {
+                    name: "popupComplaintAdd",
+                    contentUrl: "/Event/EventsComplaintAdd/" + eventId,
+                    width: 900,
+                    height: 750,
+                    headerText: 'Добавить событие - жалобу',
+                    showFooter: true,
+                    submitButtonClickEvent: "popup_submitButtonClick",
+                    closeButtonClickEvent: "popup_closeButtonClick"
+                }
+            );
+            popup.show();
+            break;
+        }
+    };
+
+    getIsIncidentOrTask = function (selectedEventPsevdoId) {
+        if (selectedEventPsevdoId == null)
+            return null;
+        var regExpr = /^[T,1-9]{1}/;
+        var resultCheck = selectedEventPsevdoId.match(regExpr);
+        return resultCheck;
+    };
+
+    popup_closeButtonClick = function(e) {
+        e.hide();
+    };
+
+    popup_submitButtonClick = function (e) {
+
+        var iframes = e.getFrames();
+        var contentWindow = iframes[0].contentWindow;
+        contentWindow.ckEditorToTextArea('richRemarks.content');
+        contentWindow.showLoadingPanel();
+        iframes.contents().find("#EditForm").ajaxSubmit({
+            success: function (data) {
+                contentWindow.hideLoadingPanel();
+                popup.hide();
+                if (data !== "") {
+                    var addedEvent = $.parseJSON(data);
+                    if (addedEvent.id !== 0) {
+                        addEventTab(addedEvent.id, addedEvent.formattedReference);
+                    };
+                }
+            },
+            error: function(data) {
+                contentWindow.hideLoadingPanel();
+                if (data != null && data.responseText != null)
+                    contentWindow["viewMessage"].show("warning", data.responseText, "Исключение");
+            }
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded',
+        function () {
+            setAccountName();
+            setFilters();
+        }
+    );
+
+    setFilters = function() {
+        @{
+            var filterModel = EventController.GetCacheFilterValByUserId(Context.User.Identity.Name);
+        }
+        var fmData = JSON.parse(@Html.Raw(JsonConvert.SerializeObject(filterModel)));
+        var chIncidents = true;
+        var chProblems = true;
+        var chChanges = true;
+        var chTasks = true;
+        var chDecisionTasks = true;
+        var chAuthorizationTasks = true;
+        var chTimerStop = false;
+        var chMyEvents = false;
+
+        if (fmData != null) {
+            chTimerStop = fmData.fltrTimerStop;
+            chMyEvents = fmData.fltrMyEvents;
+
+            if (fmData.fltrEventType.length > 0)
+            {
+                chIncidents = fmData.fltrEventType.some(elem => elem === 1);
+                chProblems = fmData.fltrEventType.some(elem => elem === 2);
+                chChanges = fmData.fltrEventType.some(elem => elem === 4);
+                chTasks = fmData.fltrEventType.some(elem => elem === 8);
+                chDecisionTasks = fmData.fltrEventType.some(elem => elem === 16);
+                chAuthorizationTasks = fmData.fltrEventType.some(elem => elem === 32);
+            }
+            else
+            {
+                chIncidents = false;
+                chProblems = false;
+                chChanges = false;
+                chTasks = false;
+                chDecisionTasks = false;
+                chAuthorizationTasks = false;
+            }
+        }
+
+        $('#chbIncidents').prop('checked', chIncidents);
+        $('#chbProblems').prop('checked', chProblems);
+        $('#chbChanges').prop('checked', chChanges);
+        $('#chbTasks').prop('checked', chTasks);
+        $('#chbDecisionTasks').prop('checked', chDecisionTasks);
+        $('#chbAuthorizationTasks').prop('checked', chAuthorizationTasks);
+        $('#chbTimerStop').prop('checked', chTimerStop);
+        $('#chbMyEvents').prop('checked', chMyEvents);
+    }
+
+    setAccountName = function () {
+        var elemAccount = $("#accountName");
+        var fullName ='@Context.User.Identity.Name';
+        var name = fullName.substring(0, fullName.indexOf(":"));
+        var nameAccount = name;
+        elemAccount.text(nameAccount);
+    }
+
+    showTabLoadingPanel = function (tabId) {
+        var lp = $("#" + tabId).find(".loadingPanel");
+        if (!(lp.hasClass("d-block")))
+            lp.addClass("d-block");
+
+    };
+    hideTabLoadingPanel = function (tabId) {
+        var lp = $("#" + tabId).find(".loadingPanel");
+        if (lp.hasClass("d-block"))
+            lp.removeClass("d-block");
+    };
+
+    getFieldByKey = function (key, index) {
+        if (key == null) return null;
+        var fields = key.split("|");
+        return fields[index];
+    };
+
+    </script>
+</head>
+
+
+<body class="app header-fixed sidebar-fixed aside-menu-fixed pace-done pace-done sidebar-lg-show aside-menu-lg-show">
+    @Html.DevExpress().StyleSheets()
+
+    <div class="pace pace-inactive pace-inactive">
+        <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
+            <div class="pace-progress-inner"></div>
+        </div>
+        <div class="pace-activity"></div>
+    </div>
+    <header class="app-header navbar">
+        <button class="navbar-toggler sidebar-toggler d-lg-none mr-auto" type="button" data-toggle="sidebar-show">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="/">
+            <div style="width: 89px; height: 25px;" class="navbar-brand-full">Assyst Helper</div>
+            <div style="width: 30px; height: 30px;" class="navbar-brand-minimized">Assyst Helper</div>
+        </a>
+        <button class="navbar-toggler sidebar-toggler d-md-down-none" type="button" data-toggle="sidebar-lg-show">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="nav navbar-nav d-md-down-none">
+            <li class="nav-item px-3">
+                <a class="nav-link" href="#" onclick="addEvent('incident');"
+                   data-toggle="tooltip" data-placement="top" title="Создать инцидент">Инциндент</a>
+            </li>
+            <li class="nav-item px-3">
+                <a class="nav-link" href="#" onclick="addEvent('consultation')"
+                   data-toggle="tooltip" data-placement="top" title="Создать консультацию">
+                    Консультация
+                </a>
+            </li>
+            <li class="nav-item px-3">
+                <a class="nav-link" href="#" onclick="addEvent('complaint')"
+                   data-toggle="tooltip" data-placement="top" title="Создать жалобу">
+                    Жалоба
+                </a>
+            </li>
+        </ul>
+        <ul class="nav navbar-nav ml-auto">
+            <li class="nav-item dropdown show">
+                <a class="nav-link nav-link" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="true" id="accountName">
+
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <div class="dropdown-header text-center">
+                        <strong>Аккаунт</strong>
+                    </div>
+                    <a class="dropdown-item" href="/Account/Logout">
+                        <i class="fa fa-lock"></i> Выход
+                    </a>
+                </div>
+            </li>
+        </ul>
+        <button class="navbar-toggler aside-menu-toggler d-md-down-none" type="button" data-toggle="aside-menu-lg-show">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <button class="navbar-toggler aside-menu-toggler d-lg-none" type="button" data-toggle="aside-menu-show">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+    </header>
+
+    <div class="app-body">
+        <div class="sidebar">
+            <nav class="sidebar-nav ps ps--active-y">
+                <div class="row p-4">
+                    <form name="MonitorFilter" id="MonitorFilter">
+                        <label class=" col-12 col-form-label">Фильтр стека</label>
+                        <div class="col-12  col-form-label">
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbIncidents" name="chbEventType[]" checked="checked" type="checkbox" value="1">
+                                <label class="form-check-label" for="chbIncidents">Инциденты</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbProblems" name="chbEventType[]" checked="checked" type="checkbox" value="2">
+                                <label class="form-check-label" for="chbProblems">Проблемы</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbChanges" name="chbEventType[]" checked="checked" type="checkbox" value="4">
+                                <label class="form-check-label" for="chbChanges">Изменения (включая сервисные запросы)</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbTasks" name="chbEventType[]" checked="checked" type="checkbox" value="8">
+                                <label class="form-check-label" for="chbTasks">Задачи</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbDecisionTasks" name="chbEventType[]" checked="checked" type="checkbox" value="16">
+                                <label class="form-check-label" for="chbDecisionTasks">Задачи принятия решений</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbAuthorizationTasks" name="chbEventType[]" checked="checked" type="checkbox" value="32">
+                                <label class="form-check-label" for="chbAuthorizationTasks">Задачи авторизации</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbTimerStop" name="timerStop" type="checkbox" value="true">
+                                <label class="form-check-label" for="chbTimerStop">Таймер остановлен</label>
+                            </div>
+                            <div class="form-check checkbox">
+                                <input class="form-check-input" onchange="reloadGrid()" id="chbMyEvents" name="myEvents" type="checkbox" value="false">
+                                <label class="form-check-label" for="chbMyEvents">Назначенные на меня</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </nav>
+        </div>
+        <main class="main">
+            <div class="container-fluid">
+                <div id="ui-view">
+                    <div id="wrapper">
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </main>
+        <aside class="aside-menu">
+            <div class="tab-content">
+                <div class="tab-pane active" id="timeline" role="tabpanel">
+                    <div class="list-group list-group-accent">
+                        <div class="list-group-item list-group-item-accent-secondary bg-light text-center font-weight-bold text-muted text-uppercase small">Рекомендации</div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-secondary bg-light text-center font-weight-bold text-muted text-uppercase small">Затронутый пользователь</div>
+                        <div id="info_affectedUser_name" class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div id="info_affectedUser_shortCode" class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div id="info_affectedUser_emailAddress" class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-secondary bg-light text-center font-weight-bold text-muted text-uppercase small">SLA</div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-secondary bg-light text-center font-weight-bold text-muted text-uppercase small">Описание</div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                        <div class="list-group-item list-group-item-accent-info list-group-item-divider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <footer class="app-footer">
+        <div class="ml-auto">
+            <span>Powered by</span>
+            <a href="http://www.aquilon-st.ru/" target="_blank">Aстех</a>
+        </div>
+    </footer>
+
+
+    @RenderSection("Scripts", required: false)
+    @Html.DevExpress().Scripts()
+
+    @* ======>>> LOADING PANEL ==============>>> *@
+    <style>
+        .modal {
+            display: none;
+            position: absolute;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            min-height: inherit;
+            min-width: inherit;
+            background: rgba(255, 255, 255, .8); /*url('http://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;*/
+        }
+
+        /* When the body has the loading class, we turn
+                the scrollbar off with overflow:hidden */
+        body.loading .modal {
+            overflow: hidden;
+        }
+
+        /* Anytime the body has the loading class, our
+                modal element will be visible */
+        body.loading .modal {
+            display: block;
+        }
+
+        .loadingPanel {
+            display: none;
+            position: absolute;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            min-height: inherit;
+            min-width: inherit;
+            background: rgba(255, 255, 255, .8); /*url('http://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;*/
+        }
+    </style>
+    <script type="text/javascript">
+        showLoadingPanel = function () {
+
+            if (!($('body').hasClass("loading")))
+                $('body').addClass("loading");
+
+        };
+        hideLoadingPanel = function () {
+            if ($('body').hasClass("loading"))
+                $('body').removeClass("loading");
+        };
+    </script>
+    <div class="modal">
+        <div class="spinner-border" style="position: fixed; left: 50%; top: 50%"></div>
+    </div>
+</body>
+</html>

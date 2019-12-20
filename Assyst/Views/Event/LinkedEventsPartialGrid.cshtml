@@ -1,0 +1,60 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<LinkedEventGridItem>
+
+@(Html.DevExpress().BootstrapGridView<LinkedEventGridItem>("gridLinkedEventItem")
+          .Routes(routes => routes
+              .MapRoute(r => r
+                  .Action("LinkedEventsPartialGrid")
+                  .Controller("Event")))
+          .ClientSideEvents(events =>
+          {
+              events.BeginCallback("gridLinkedEventItem_BeginCallback");
+              events.EndCallback("gridLinkedEventItem_EndCallback");
+              events.RowDblClick("gridLinkedEventItem_RowDblClick");
+          })
+          .SettingsBehavior(s =>
+          {
+              s.AllowFocusedRow(true);
+              s.AllowSelectByRowClick(true);
+              s.AllowSelectSingleRowOnly(true);
+              s.AllowEllipsisInText(false);
+              s.AllowSort(true);
+              s.ProcessFocusedRowChangedOnServer(false);
+              s.ProcessSelectionChangedOnServer(false);
+              s.AutoExpandAllGroups(true);
+          })
+          .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+          .SettingsBehavior(behavior => behavior.AutoExpandAllGroups(true))
+          .SettingsBootstrap(settings => settings.Striped(true))
+          .SettingsPager(s => s.PageSize(1000))
+          .Columns(columns =>
+          {
+              columns.Add(m => m.linkedEventGroupId).Width(80).Caption("Id группы событий").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false).GroupIndex(0);
+              columns.Add(m => m.linkedEventGroup.linkReasonName).Width(80).Caption("Причина связи").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(true).GroupIndex(1);
+              columns.Add(m => m.linkedEvent.id).Caption("Id события").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false);
+              columns.AddHyperLinkColumn(m => m.linkedEvent.id)
+                               .PropertiesHyperLinkEdit(p =>
+                               {
+                                   p.NavigateUrlFormatString("/Event/Monitor/{0}");
+                                   p.Target("_blank");
+                                   p.TextField("linkedEventFormattedReference");
+                               })
+                               .Width(80)
+                               .Caption("Номер события")
+                               .HorizontalAlign(HorizontalAlign.Left);
+              columns.Add(m => m.linkedEvent.remarks).Caption("Описание").HorizontalAlign(HorizontalAlign.Left);
+              columns.Add(m => m.linkedEvent.assignedUser.name).Caption("Назначенный пользователь").HorizontalAlign(HorizontalAlign.Left);
+          })
+          .KeyFieldName(m => m.key)
+          .Settings(settings => settings
+                .ShowFilterRow(true)
+                .ShowFilterRowMenu(true))
+            .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+            .OnBeforeRender((grid, args) =>
+            {
+                grid.JSProperties["cpResult"] = ViewData["result"];
+            })
+            .Bind(Model)
+    )
+

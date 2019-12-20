@@ -1,0 +1,64 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.AspNetCore.Bootstrap
+@model Assyst.Models.LoginModel
+
+@{
+    ViewData["Title"] = "Форма авторизации";
+    Layout = "_Layout_Account";
+}
+
+<div class="row justify-content-center align-items-center" style="height: 600px;">
+    <div class="pace  pace-inactive">
+        <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
+            <div class="pace-progress-inner"></div>
+        </div>
+        <div class="pace-activity"></div>
+    </div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card-group">
+                    <div class="card p-4">
+                        <div class="card-body">
+                            <form class="form-horizontal" asp-action="Login" asp-controller="Account" asp-anti-forgery="true">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <h3>Авторизация</h3>
+                                <p class="text-muted">Войдите в свой аккаунт</p>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="icon-user"></i>
+                                        </span>
+                                    </div>
+                                    <input class="form-control" asp-for="Login" type="text" placeholder="Логин">
+                                </div>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="icon-lock"></i>
+                                        </span>
+                                    </div>
+                                    <input class="form-control" asp-for="Password" type="password" placeholder="Пароль">
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        @(Html.DevExpress()
+                                             .BootstrapButton()
+                                             .UseSubmitBehavior(true)
+                                             .Name("LoginButton")
+                                             .Text("Вход")
+                                             .CssClasses(settings =>
+                                             {
+                                                 settings.Control("btn btn-primary float-right px-4");
+                                             })
+                                             .SettingsBootstrap(settings => settings.RenderOption(BootstrapRenderOption.Primary))
+                                        )
+                                    </div>
+                                </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

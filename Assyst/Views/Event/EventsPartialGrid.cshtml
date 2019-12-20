@@ -1,0 +1,61 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<EventItem>
+
+
+@(Html.DevExpress().BootstrapGridView<EventItem>("grid")
+        .KeyFieldName("id", "formattedReference")
+        .Routes(routes => routes
+            .MapRoute(r => r
+                .Action("EventsPartialGrid")
+                .Controller("Event")))
+        .ClientSideEvents(events =>
+        {
+            events.BeginCallback("grid_BeginCallback");
+            events.EndCallback("grid_EndCallback");
+            events.RowDblClick("grid_RowDblClick");
+        })
+        .SettingsBehavior(s =>
+        {
+            s.AllowFocusedRow(true);
+            s.AllowSelectByRowClick(true);
+            s.AllowSelectSingleRowOnly(true);
+            s.AllowEllipsisInText(true);
+            s.AllowSort(true);
+            s.ProcessFocusedRowChangedOnServer(false);
+            s.ProcessSelectionChangedOnServer(false);
+        })
+        .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+        .SettingsBootstrap(settings => settings.Striped(true))
+        .SettingsPager(s => s.PageSize(1000))
+        .Columns(columns =>
+        {
+            columns.Add(m => m.id).Caption("Id").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false);
+            columns.AddHyperLinkColumn(m => m.id)
+                .PropertiesHyperLinkEdit(p =>
+                {
+                    p.NavigateUrlFormatString("/Event/Monitor/{0}");
+                    p.Target("_blank");
+                    p.TextField("formattedReference");
+                })
+                .Width(80)
+                .Caption("Номер события")
+                .HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.parentEvent.formattedReference).Width(80).Caption("Родит. заявка").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.itemA.name).Caption("Объект A").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.itemB.name).Caption("Объект B").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.category.name).Caption("Категория").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.priority.name).Caption("Приоритет").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.seriousness.name).Caption("Срочность").HorizontalAlign(HorizontalAlign.Left);
+        })
+        .Settings(settings => settings
+            .ShowFilterRow(true)
+            .ShowFilterRowMenu(true))
+        .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+         .OnBeforeRender((grid, args) =>
+         {
+             grid.JSProperties["cpResult"] = ViewData["result"];
+         })
+        .Bind(Model)
+)
+

@@ -1,0 +1,84 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+
+@model LinkEventItem
+
+@{
+    Layout = "_Layout_Popup";
+}
+
+<script type="text/javascript">
+
+    categoryId_valueChanged = function() {
+    };
+
+    categoryId_init = function() {
+    };
+
+</script>
+
+<form asp-action="ActionAddLink" name="AddLinkActionForm" id="AddLinkActionForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input asp-for="eventId1" hidden="hidden" />
+    <div class="row">
+        <div class="col-md form-group">
+            <label class="control-label">1 событие</label>
+            <input value="@Model.event1.formattedReference" class="form-control" readonly="readonly" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md form-group">
+            <label asp-for="eventId2" class="control-label">2 событие</label>
+            @Html.CreateButtonEdit("eventId2", "Events", "Выбор 2 события", Model.event2?.id, Model.event2?.formattedReference, new { linkEventId = Model.eventId1 })
+            <span asp-validation-for="eventId2" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md form-group">
+            <label asp-for="linkedReasonId" class="control-label">Причина связи</label>
+            @(Html.DevExpress()
+                .BootstrapComboBox("linkedReasonId")
+                .ValueType(typeof(long))
+                .TextField("name")
+                .ValueField("id")
+                .Value(Model.linkedReasonId)
+                .Bind(ViewBag.LinkedReasonList)
+            )
+            <span class="text-danger"></span>
+        </div>
+    </div>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,16 @@
+﻿@using DevExpress.AspNetCore
+
+@model IEnumerable<CategoryItem>
+
+@(Html.DevExpress()
+            .BootstrapComboBox("categoryId")
+            .ValueType(typeof(long))
+            .TextField("name")
+            .ValueField("id")
+             .ClientSideEvents(events =>
+              {
+                  events.Init("categoryId_init");
+                  events.ValueChanged("categoryId_valueChanged");
+              })
+            .Bind(Model)
+)

@@ -1,0 +1,386 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+@using DevExpress.Utils
+@model EventItem
+
+<script type="text/javascript">
+
+    var catId = @Model.categoryId;
+    var isOneSetCategoryId = false;
+
+    buttonEdit_affectedUserId_ValueChanged = function () {
+        setIsChanged(true);
+        var affectedUserId = buttonEdit_affectedUserId.getValue();
+        if (affectedUserId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonContactUserById",
+                data: { id: affectedUserId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    buttonEdit_departmentId.setValue(data.department != null ? data.department.id: null);
+                    buttonEdit_departmentId.setText(data.department != null ? data.department.name: null);
+                    buttonEdit_roomId.setValue(data.room != null ? data.room.id : null);
+                    buttonEdit_roomId.setText(data.room != null ? data.room.roomName : null);
+                    buttonEdit_sectionId.setValue(data.department != null && data.department.section != null ? data.department.section.id : null);
+                    buttonEdit_sectionId.setText(data.department != null && data.department.section != null ? data.department.section.name : null);
+                    buttonEdit_buildingId.setValue(data.room != null ? data.room.buildingId : null);
+                    buttonEdit_buildingId.setText(data.room != null ? data.room.buildingName : null);
+
+                    infoPanel.affectedUser = {
+                        name: data.name,
+                        shortCode: data.shortCode,
+                        emailAddress: data.emailAddress
+                    };
+                    top.window.updateAffectedUser(infoPanel.affectedUser);
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        } else {
+            infoPanel.affectedUser = null;
+            top.window.updateAffectedUser();
+        };
+    };
+
+    buttonEdit_sectionId_ValueChanged = function () {
+        setIsChanged(true);
+        var sectionId = buttonEdit_sectionId.getValue();
+        var departmentId = buttonEdit_departmentId.getValue();
+        if (departmentId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonDepartmentById",
+                data: { id: departmentId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    if (data.sectionId != sectionId) {
+                        buttonEdit_departmentId.setValue(null);
+                        buttonEdit_departmentId.setText(null);
+                    }
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        }
+    };
+
+    buttonEdit_departmentId_ValueChanged = function () {
+        setIsChanged(true);
+        var departmentId = buttonEdit_departmentId.getValue();
+        if (departmentId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonDepartmentById",
+                data: { id: departmentId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    buttonEdit_sectionId.setValue(data.section != null ? data.section.id : null);
+                    buttonEdit_sectionId.setText(data.section != null ? data.section.name : null);
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        } else {
+            buttonEdit_sectionId.setValue(null);
+            buttonEdit_sectionId.setText(null);
+        }
+    };
+
+    buttonEdit_buildingId_ValueChanged = function () {
+        setIsChanged(true);
+        var buildingId = buttonEdit_buildingId.getValue();
+        var roomId = buttonEdit_roomId.getValue();
+        if (roomId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonRoomById",
+                data: { id: roomId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    if (data.buildingId != buildingId) {
+                        buttonEdit_roomId.setValue(null);
+                        buttonEdit_roomId.setText(null);
+                    }
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        }
+    };
+
+    buttonEdit_roomId_ValueChanged = function () {
+        setIsChanged(true);
+        var roomId = buttonEdit_roomId.getValue();
+        if (roomId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonRoomById",
+                data: { id: roomId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    buttonEdit_buildingId.setValue(data.buildingId);
+                    buttonEdit_buildingId.setText(data.buildingName);
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        } else {
+            buttonEdit_buildingId.setValue(null);
+            buttonEdit_buildingId.setText(null);
+        }
+    };
+
+    buttonEdit_itemAId_ValueChanged = function () {
+        setIsChanged(true);
+        var itemAId = buttonEdit_itemAId.getValue();
+        buttonEdit_itemBId.setAttribute("relatedItemId", itemAId);
+        if (itemAId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonObjectById",
+                data: { id: itemAId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    buttonEdit_productId.setValue(data.product != null ? data.product.id : null);
+                    buttonEdit_productId.setText(data.product != null ? data.product.name : null);
+                    reloadCategoriesCb();
+                },
+                error: function (data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        } else {
+            buttonEdit_productId.setValue(null);
+            buttonEdit_productId.setText(null);
+            reloadCategoriesCb();
+        }
+    };
+
+    buttonEdit_productId_ValueChanged = function () {
+        setIsChanged(true);
+        var productId = buttonEdit_productId.getValue();
+        var itemAId = buttonEdit_itemAId.getValue();
+        if (itemAId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetJsonObjectById",
+                data: { id: roomId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    if (data.productId != productId) {
+                        buttonEdit_itemAId.setValue(null);
+                        buttonEdit_itemAId.setText(null);
+                        buttonEdit_itemBId.setAttribute("relatedItemId", null);
+                    }
+                },
+                error: function(data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        }
+    };
+
+    buttonEdit_itemBId_ValueChanged = function () {
+        setIsChanged(true);
+        var itemBId = buttonEdit_itemBId.getValue();
+        buttonEdit_itemAId.setAttribute("relatedItemId", itemBId);
+    };
+
+    categoryId_valueChanged = function () {
+        setIsChanged(true);
+        catId = categoryId.getValue();
+        var itemAId = buttonEdit_itemAId.getValue();
+        if (itemAId != null) {
+            $.ajax({
+                type: "GET",
+                url: "/Event/GetEventBuilderByCategoryId",
+                data: { relatedItemId: itemAId, categoryId: catId },
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    if (data.seriousnessId != null)
+                        seriousnessId.setValue(data.seriousnessId);
+                    if (data.priorityId != null)
+                        priorityId.setValue(data.priorityId);
+                },
+                error: function (data) {
+                    alert("Ошибка получения данных");
+                }
+            });
+        }
+    };
+
+    categoryId_init = function () {
+        if (!isOneSetCategoryId) {
+            categoryId.setValue(catId != 0 ? catId : null);
+            isOneSetCategoryId = true;
+        };
+    };
+
+    reloadCategoriesCb = function () {
+        var itemAId = buttonEdit_itemAId.getValue();
+        $.ajax({
+            type: 'GET',
+            url: '@Url.Action("CategoriesPartialCb", "Event")',
+            data: { relatedItemId: itemAId, eventCategoryId: catId },
+            dataType: "html",
+            success: function(data) {
+                $('#categoryCbContainer').html(data);
+            },
+            error: function(error) {
+                popups.errormessage(error);
+            }
+        });
+    }
+
+    seriousnessId_ValueChanged = function () {
+        setIsChanged(true);
+    }
+
+    priorityId_ValueChanged = function () {
+        setIsChanged(true);
+    }
+
+</script>
+<form asp-controller="Event" asp-action="EventsEdit" name="EditForm" id="EditForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input asp-for="id" hidden="hidden" />
+    <input asp-for="modeRead" hidden="hidden" />
+    <input asp-for="eventType" hidden="hidden" />
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label asp-for="affectedUserId" class="control-label">Затронутый пользователь</label>
+            @Html.CreateButtonEdit("affectedUserId", "ContactUsers", "Выбор затронутого пользователя", Model.affectedUser?.id, Model.affectedUser?.name)
+            <span asp-validation-for="affectedUserId" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="affectedUserTelephone" class="control-label">Телефон</label>
+            <input asp-for="affectedUserTelephone" class="form-control" onchange="setIsChanged(true)" />
+            <span asp-validation-for="affectedUserTelephone" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="affectedUserTelephoneExtension" class="control-label">Добавочный номер</label>
+            <input asp-for="affectedUserTelephoneExtension" class="form-control" onchange="setIsChanged(true)" />
+            <span asp-validation-for="affectedUserTelephoneExtension" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-3">
+            <label asp-for="sectionId" class="control-label">Управление</label>
+            @Html.CreateButtonEdit("sectionId", "Sections", "Выбор управления", Model.department?.section?.id, Model.department?.section?.name)
+            <span class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="departmentId" class="control-label">Отдел</label>
+            @Html.CreateButtonEdit("departmentId", "Departments", "Выбор отдела", Model.department?.id, Model.department?.name)
+            <span class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="buildingId" class="control-label">Здание</label>
+            @Html.CreateButtonEdit("buildingId", "Buildings", "Выбор здания", Model.room?.buildingId, Model.room?.buildingName)
+            <span asp-validation-for="buildingId" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="roomId" class="control-label">Комната</label>
+            @Html.CreateButtonEdit("roomId", "Rooms", "Выбор комнаты", Model.room?.id, Model.room?.roomName)
+            <span asp-validation-for="roomId" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-12">
+            <label asp-for="richRemarks.content" class="control-label">Описание</label>
+            <textarea asp-for="richRemarks.content" id="richRemarks.content" class="form-control"></textarea>
+            <script type="text/javascript">
+                CKEDITOR.replace('richRemarks.content', {
+                    on: {
+                        change: function (evt) {
+                            setIsChanged(true);
+                        }
+                    }
+                });
+            </script>
+            <span asp-validation-for="richRemarks.content" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">Группа услуг(продукт)</label>
+            @Html.CreateButtonEdit("productId", "Products", "Выбор группы услуг(продукта)", Model.itemA?.product?.id, Model.itemA?.product?.name)
+            <span class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-6">
+            <label asp-for="itemAId" class="control-label">Услуга (классификатор)</label>
+            @Html.CreateButtonEdit("itemAId", "Objects", "Выбор услуги (классификатора)", Model.itemA?.id, Model.itemA?.name, new { relatedItemId = Model.itemB?.id })
+            <span asp-validation-for="itemAId" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-3">
+            <label asp-for="itemBId" class="control-label">Информационная система (item B)</label>
+            @Html.CreateButtonEdit("itemBId", "Objects", "Выбор информационной системы (item B)", Model.itemB?.id, Model.itemB?.name, new { relatedItemId = Model.itemA?.id })
+            <span asp-validation-for="itemBId" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="categoryId" class="control-label">Категория</label>
+            <div id="categoryCbContainer">
+                @await Html.PartialAsync("~/Views/Event/CategoriesPartialCb.cshtml", ViewData["Categories"])
+            </div>
+            <span asp-validation-for="categoryId" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="seriousnessId" class="control-label">Срочность</label>
+            @(Html.DevExpress()
+                                        .BootstrapComboBox("seriousnessId")
+                                        .ValueType(typeof(long))
+                                        .TextField("name")
+                                        .ValueField("id")
+                                        .ClientReadOnly(true)
+                                        .Value(Model.seriousnessId)
+                                        .ClientSideEvents(events => { events.ValueChanged("seriousnessId_ValueChanged"); })
+                                        .Bind(ViewBag.SeriousnessList)
+            )
+            <span asp-validation-for="seriousnessId" class="text-danger"></span>
+        </div>
+        <div class="form-group col-sm-3">
+            <label asp-for="priorityId" class="control-label">Приоритет</label>
+            @(Html.DevExpress()
+                                        .BootstrapComboBox("priorityId")
+                                        .ValueType(typeof(long))
+                                        .TextField("name")
+                                        .ValueField("id")
+                                        .Value(Model.priorityId)
+                                        .ClientSideEvents(events => { events.ValueChanged("priorityId_ValueChanged"); })
+                                        .Bind(ViewBag.PrioritityList)
+            )
+            <span asp-validation-for="priorityId" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-4">
+            <label class="control-label">Назначенная группа</label>
+            <input value="@Model.assignedServDept?.name" class="form-control" disabled="disabled" />
+        </div>
+        <div class="form-group col-sm-4">
+            <label class="control-label">Назначенный специалист</label>
+            <input value="@Model.assignedUser?.name" class="form-control" disabled="disabled" />
+        </div>
+        <div class="form-group col-sm-4">
+            <label class="control-label">Классификация инцидента</label>
+            <input class="form-control" disabled="disabled" />
+        </div>
+    </div>
+
+</form>

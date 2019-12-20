@@ -1,0 +1,61 @@
+﻿@using DevExpress.AspNetCore
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
+<html>
+<head>
+    @{
+        var currentTheme = $"/lib/bootstrap/dist/css/themes/{CustomTheme.CurrentTheme}/bootstrap.min.css?anything=goeshere"; @*anything=goeshere для перезаписи стилей в кэше браузера*@
+        <link rel="stylesheet" href="@currentTheme" />
+    }
+
+    <link href="~/lib/coreui/css/coreui-icons.min.css" rel="stylesheet">
+    <link href="~/lib/coreui/css/simple-line-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/coreui/css/style.min.css">
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery/dist/jquery.form.js"></script>
+    <script src="~/lib/coreui/js/popper.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="~/lib/coreui/js/perfect-scrollbar.min.js"></script>
+    <script src="~/lib/coreui/js/coreui.min.js"></script>
+    <script src="~/js/site.js"></script>
+
+    @*<link rel="stylesheet" href="~/lib/font-awesome/css/all.css" />*@
+</head>
+<body class="app header-fixed sidebar-fixed aside-menu-fixed pace-done pace-done @*sidebar-lg-show*@">
+    @Html.DevExpress().StyleSheets()
+
+    <div class="pace pace-inactive pace-inactive">
+        <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
+            <div class="pace-progress-inner"></div>
+        </div>
+        <div class="pace-activity"></div>
+    </div>
+    <header class="app-header navbar">
+        <a class="navbar-brand" href="#">
+            <div style="width: 89px; height: 25px;" class="navbar-brand-full">Assyst Helper</div>
+            <div style="width: 30px; height: 30px;" class="navbar-brand-minimized">Assyst Helper</div>
+        </a>
+    </header>
+    <div class="app-body">
+        <main class="main">
+            <div class="container-fluid">
+                <div id="ui-view">
+                    <div id="wrapper">
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <footer class="app-footer">
+        <div class="ml-auto">
+            <span>Powered by</span>
+            <a href="http://www.aquilon-st.ru/" target="_blank">Aстех</a>
+        </div>
+    </footer>
+
+
+    @RenderSection("Scripts", required: false)
+    @Html.DevExpress().Scripts()
+</body>
+</html>

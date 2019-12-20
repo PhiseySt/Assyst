@@ -1,0 +1,46 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<AttachmentItem>
+
+@(Html.DevExpress().BootstrapGridView<AttachmentItem>("gridAttachmentItem")
+          .Routes(routes => routes
+              .MapRoute(r => r
+                  .Action("AttachmentsPartialGrid")
+                  .Controller("Event")))
+          .ClientSideEvents(events =>
+          {
+              events.BeginCallback("gridAttachmentItem_BeginCallback");
+              events.EndCallback("gridAttachmentItem_EndCallback");
+              events.RowDblClick("gridAttachmentItem_RowDblClick");
+          })
+          .SettingsBehavior(s =>
+          {
+              s.AllowFocusedRow(true);
+              s.AllowSelectByRowClick(true);
+              s.AllowSelectSingleRowOnly(true);
+              s.AllowEllipsisInText(false);
+              s.AllowSort(true);
+              s.ProcessFocusedRowChangedOnServer(false);
+              s.ProcessSelectionChangedOnServer(false);
+              s.AutoExpandAllGroups(true);
+          })
+          .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+          .SettingsBootstrap(settings => settings.Striped(true))
+          .SettingsPager(s => s.PageSize(1000))
+          .Columns(columns =>
+          {
+              columns.Add(m => m.id).Width(50).Caption("Id файла").HorizontalAlign(HorizontalAlign.Left).SortIndex(0).SortOrder(ColumnSortOrder.Descending).Visible(false);
+              columns.Add(m => m.filename).Width(50).Caption("Имя файла").HorizontalAlign(HorizontalAlign.Left).Visible(true);
+              columns.Add(m => m.name).Width(50).Caption("Название").HorizontalAlign(HorizontalAlign.Left).Visible(true);
+              columns.Add(m => m.description).Width(50).Caption("Заметка").HorizontalAlign(HorizontalAlign.Left).Visible(true);
+              columns.AddHyperLinkColumn(m => m.urldownload).Width(50).Caption("Ссылка на файл").HorizontalAlign(HorizontalAlign.Left).PropertiesHyperLinkEdit(r => r.Target("_blank")).Visible(true);
+              }).KeyFieldName(m => m.id)
+          .Settings(settings => settings
+            .ShowFilterRow(false)
+            .ShowFilterRowMenu(false))
+        .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+        .OnBeforeRender((grid, args) =>
+        {
+            grid.JSProperties["cpResult"] = ViewData["result"];
+        })
+        .Bind(Model))

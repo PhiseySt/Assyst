@@ -1,0 +1,113 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+
+@model EventItem
+
+@{
+    ViewData["Title"] = "EventsConsultationAdd";
+    Layout = "_Layout_Popup";
+}
+
+<script type="text/javascript">
+
+    var indZaprosStatusa = 10;
+
+    window.onload = function (e) {
+        linkedReasonId.setSelectedIndex(indZaprosStatusa);
+    };
+
+    categoryId_valueChanged = function () {
+    };
+
+    categoryId_init = function () {
+        categoryId.setValue(@Model.categoryId);
+    };
+
+</script>
+
+<div class="row">
+    <div class="col-md">
+        <form asp-action="EventsConsultationAdd" name="EditForm" id="EditForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input asp-for="parentEventId" hidden="hidden"/>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">Родительская задача</label>
+                    <input value="@Model.parentEvent?.formattedReference" class="form-control" readonly="readonly" />
+                </div>
+                <div class="form-group col-sm-6">
+                    <label asp-for="affectedUserId" class="control-label">Затронутый пользователь</label>
+                    @Html.CreateButtonEdit("affectedUserId", "ContactUsers", "Выбор затронутого пользователя", Model.affectedUser?.id, Model.affectedUser?.name)
+                    <span asp-validation-for="affectedUserId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label asp-for="linkedReasonId" class="control-label">Причина связи</label>
+                    @(Html.DevExpress()
+                        .BootstrapComboBox("linkedReasonId")
+                        .ValueType(typeof(string))
+                        .TextField("name")
+                        .ValueField("id")
+                        .Bind(ViewBag.LinkedReasonList)
+                    )
+                </div>
+                <div class="form-group col-sm-6">
+                    <label asp-for="categoryId" class="control-label">* Категория</label>
+                    <div id="categoryCbContainer">
+                        @await Html.PartialAsync("~/Views/Event/CategoriesPartialCb.cshtml", ViewData["Categories"])
+                    </div>
+                    <span class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-12">
+                    <label asp-for="richRemarks.content" class="control-label">Описание</label>
+                    <textarea asp-for="richRemarks.content" class="form-control" rows="3" id="richRemarks.content"></textarea>
+                    <script type="text/javascript">
+                        CKEDITOR.replace('richRemarks.content');
+                    </script>
+                    <span asp-validation-for="richRemarks.content" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <input asp-for="modeRead" class="invisible" />
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

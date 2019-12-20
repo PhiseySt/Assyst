@@ -1,0 +1,15 @@
+﻿@using DevExpress.AspNetCore
+
+@model IEnumerable<AssystUserItem>
+
+@(Html.DevExpress()
+    .BootstrapComboBox("assignedUserId")
+    .ValueType(typeof(long))
+    .TextField("name")
+    .ValueField("id")
+        .ClientSideEvents(events =>
+        {
+            events.Init("assignedUserId_init");
+        })
+    .Bind(Model)
+)

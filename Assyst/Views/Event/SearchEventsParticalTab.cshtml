@@ -1,0 +1,138 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+
+@model IEnumerable<EventItem>
+
+<style>
+    .margin5 {
+        margin: 5px;
+    }
+</style>
+
+<script src="~/lib/coreui/js/sweetalert.min.js"></script>
+<script src="~/js/alerting.js"></script>
+<script type="text/javascript">
+
+    var formattedReference,
+        affectedUserId,
+        buildingId,
+        remarks;
+
+    gridSearchEventItem_dblClicked = function () {
+        var selectedEventKey = gridSearchEventItem.getRowKey(gridSearchEventItem.getFocusedRowIndex());
+        var eventId = getFieldByKey(selectedEventKey, 0);
+        var eventFormattedReference = getFieldByKey(selectedEventKey, 1);
+        addEventTab(eventId, eventFormattedReference);
+    }
+
+    gridSearchEventItem_focusedRowChanged = function () {
+    }
+
+    gridSearchEventItem_beginCallback = function (s, e) {
+        $('#clearBtn').addClass('disabled');
+        $('#searchBtn').addClass('disabled');
+        formattedReference = tbFormattedReference.getValue();
+        affectedUserId = buttonEdit_beAffectedUserId.getValue();
+        buildingId = buttonEdit_beBuildingId.getValue();
+        remarks = tbRemarks.getValue();
+        e.customArgs["formattedReference"] = formattedReference;
+        e.customArgs["affectedUserId"] = affectedUserId;
+        e.customArgs["buildingId"] = buildingId;
+        e.customArgs["remarks"] = remarks;
+    }
+
+    gridSearchEventItem_init = function () {
+        
+    }
+
+    gridSearchEventItem_endCallback = function () {
+        $('#clearBtn').removeClass('disabled');
+        $('#searchBtn').removeClass('disabled');
+        if (this.cpResult != "success") {
+            searchViewMessage.show("warning", this.cpResult, "Исключение");
+        }
+        else {
+            searchViewMessage.hide();
+            var visibleRowsOnPage = gridSearchEventItem.getVisibleRowsOnPage();
+            if (visibleRowsOnPage === 0 && ((remarks != null && remarks != undefined && remarks.trim() !== "") || affectedUserId != null))
+                popups.question(
+                    "Создать новый инцидент на основе запрошенных данных?",
+                    function () {
+                        addEventTab(0, "Новый инцидент", affectedUserId, remarks);
+                    }
+                );
+        }
+    }
+
+    reloadGridSearch = function () {
+        gridSearchEventItem.refresh();
+    }
+
+    function btnSearch_Click() {
+        reloadGridSearch();
+    }
+
+    function btnClear_Click() {
+        tbFormattedReference.setValue(null);
+        buttonEdit_beAffectedUserId.setValue(null);
+        buttonEdit_beAffectedUserId.setText(null);
+        buttonEdit_beBuildingId.setValue(null);
+        buttonEdit_beBuildingId.setText(null);
+        tbRemarks.setValue(null);
+        reloadGridSearch();
+    }
+
+</script>
+<div class="row pt-1">
+    <div class="col-12">
+        @Html.CreateMessageView(new ViewMessageSettings("searchViewMessage"))
+    </div>
+</div>
+<div class="row pb-2">
+    <p class="col-md pt-1" style="font-size:1rem;">
+        Поиск события: пожалуйста, задайте критерии поиска
+    </p>
+    <div class="col-md">
+        <button id="clearBtn" class="btn btn-primary fa-lg float-right ml-2" title="сбросить" onclick="btnClear_Click()">
+            <i class="fa fa-eraser fa-sm"></i>
+        </button>
+        <button id="searchBtn" class="btn btn-primary fa-lg float-right ml-2" title="поиск" onclick="btnSearch_Click()">
+            <i class="fa fa-search fa-sm"></i>
+        </button>
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <div id="tbShortCodeContainer">
+            <label>Номер :</label>
+            @(Html.DevExpress().BootstrapTextBox("tbFormattedReference"))
+        </div>
+    </div>
+    <div class="form-group col-sm-6">
+        <div id="tbNameContainer">
+            <label>Пользователь:</label>
+            @Html.CreateButtonEdit("beAffectedUserId", "ContactUsers", "Выбор пользователя")
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <div id="tbDepartmentIdContainer">
+            <label>Описание:</label>
+            @(Html.DevExpress().BootstrapTextBox("tbRemarks"))
+        </div>
+    </div>
+    <div class="form-group col-sm-6">
+        <div id="tbNameContainer">
+            <label>Здание:</label>
+            @Html.CreateButtonEdit("beBuildingId", "Buildings", "Выбор здания")
+        </div>
+    </div>
+</div>
+<div class="row pt-4">
+    <div class="form-group col-12">
+        <div id="SearchEventGridContainer">
+            @await Html.PartialAsync("SearchEventsPartialGrid")
+        </div>
+    </div>
+</div>

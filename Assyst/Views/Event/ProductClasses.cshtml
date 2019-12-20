@@ -1,0 +1,104 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+@using DevExpress.AspNetCore.Bootstrap
+
+@model List<ProductClassItem>
+
+@{
+    Layout = "_Layout_Popup";
+}
+
+<script type="text/javascript">
+
+    grid_BeginCallback = function (s, e) {
+        btnSearch.setEnabled(false);
+        e.customArgs["name"] = tbName.getValue();
+        e.customArgs["shortCode"] = tbShortCode.getValue();
+    };
+
+    grid_EndCallback = function (args) {
+        btnSearch.setEnabled(true);
+        if (this.cpResult != "success")
+            viewMessage.show("warning", this.cpResult, "Исключение");
+        else
+            viewMessage.hide();
+    }
+
+    grid_RowDblClick = function () {
+        var focusedRowKey = grid.getSelectedKeysOnPage();
+        refPopup.callControl.choiceElement(focusedRowKey);
+    };
+
+    reloadGrid = function () {
+        grid.refresh();
+    };
+
+    btnSearch_Click = function () {
+        reloadGrid();
+    };
+
+</script>
+
+<div class="row">
+    <div class="form-group col-12">
+        <label>Код:</label>
+        @(Html.DevExpress()
+                    .BootstrapTextBox("tbShortCode")
+        )
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-12">
+        <label>Имя:</label>
+        @(Html.DevExpress()
+                                .BootstrapTextBox("tbName")
+                                .Value(ViewData["name"]))
+    </div>
+</div>
+<div class="row pt-2">
+    <div class="form-group col-12">
+        @(Html.DevExpress()
+                    .BootstrapButton("btnSearch")
+                    .SettingsBootstrap(settings => settings.RenderOption(BootstrapRenderOption.Primary))
+                    .Text("Поиск")
+                    .ClientSideEvents(events => events.Click("btnSearch_Click"))
+        )
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        @await Html.PartialAsync("ProductClassesPartialGrid")
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

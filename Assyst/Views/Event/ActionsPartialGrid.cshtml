@@ -1,0 +1,53 @@
+﻿@using DevExpress.AspNetCore
+@using DevExpress.Data
+@model IEnumerable<ActionItem>
+
+@(Html.DevExpress().BootstrapGridView<ActionItem>("gridActionItem")
+        .Routes(routes => routes
+            .MapRoute(r => r
+                .Action("ActionsPartialGrid")
+                .Controller("Event")))
+        .ClientSideEvents(events =>
+        {
+            events.BeginCallback("gridActionItem_BeginCallback");
+            events.EndCallback("gridActionItem_EndCallback");
+            events.RowDblClick("gridActionItem_RowDblClick");
+        })
+        .SettingsBehavior(s =>
+        {
+            s.AllowFocusedRow(true);
+            s.AllowSelectByRowClick(true);
+            s.AllowSelectSingleRowOnly(true);
+            s.AllowEllipsisInText(false);
+            s.AllowSort(true);
+            s.ProcessFocusedRowChangedOnServer(false);
+            s.ProcessSelectionChangedOnServer(false);
+        })
+        .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+        .SettingsBootstrap(settings => settings.Striped(true))
+        .SettingsPager(s => s.PageSize(1000))
+        .Columns(columns =>
+        {
+            columns.Add(m => m.id).Caption("Id действия").Width(80).HorizontalAlign(HorizontalAlign.Left).Visible(false);
+            columns.Add(m => m.actionType.name).Caption("Тип действия").HorizontalAlign(HorizontalAlign.Left);
+            columns.AddDateEditColumn(m => m.dateActioned).Width(150).Caption("Дата действия").SortIndex(0).SortOrder(ColumnSortOrder.Descending).PropertiesDateEdit(r => r.DisplayFormatString("dd.MM.yyyy HH:mm")).HorizontalAlign(HorizontalAlign.Left);
+            columns.AddMemoColumn(m => m.formatedRemarks).Caption("Описание").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.actionedBy.name).Caption("Модификация выполнена").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.actioningServDept.name).Caption("Исполняющая группа").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.assignedServDept.name).Caption("Назначенная группа").HorizontalAlign(HorizontalAlign.Left);
+            columns.Add(m => m.assignedUser.name).Caption("Назначенный специалист").HorizontalAlign(HorizontalAlign.Left);
+
+        })
+        .KeyFieldName(m => m.id)
+        .Settings(settings => settings
+            .ShowFilterRow(true)
+            .ShowFilterRowMenu(true)
+        )
+        .SettingsLoadingPanel(s => s.Mode(GridViewLoadingPanelMode.ShowAsPopup))
+        .OnBeforeRender((grid, args) =>
+        {
+            grid.JSProperties["cpResult"] = ViewData["result"];
+        })
+        .Bind(Model)
+)
+

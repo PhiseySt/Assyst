@@ -1,0 +1,85 @@
+﻿@using Assyst.HtmlHelpers
+@using DevExpress.AspNetCore
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var currentTheme = $"/lib/bootstrap/dist/css/themes/{CustomTheme.CurrentTheme}/bootstrap.min.css?anything=goeshere"; @*anything=goeshere для перезаписи стилей в кэше браузера*@
+    <link rel="stylesheet" href="@currentTheme" />
+}
+<link rel="stylesheet" href="~/css/site.css">
+<link href="~/lib/coreui/css/coreui-icons.min.css" rel="stylesheet">
+<link href="~/lib/coreui/css/simple-line-icons.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="~/lib/jquery/dist/jquery.js"></script>
+<script src="~/lib/coreui/js/popper.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+<script src="~/lib/jquery/dist/jquery.form.js"></script>
+<script src="~/lib/coreui/js/sweetalert.min.js"></script>
+<script src="~/js/alerting.js?13"></script>
+<script src="~/lib/ckeditor/ckeditor.js"></script>
+<script src="~/lib/ckeditor/plugins/autogrow/plugin.js"></script>
+<script src="~/js/site.js?1"></script>
+<script src="~/js/popup.js?101"></script>
+<script src="~/js/viewMessage.js"></script>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    @Html.DevExpress().StyleSheets()
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                @Html.CreateMessageView(new ViewMessageSettings("viewMessage"))
+            </div>
+        </div>
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    @RenderSection("Scripts", required: false)
+    @Html.DevExpress().Scripts()
+
+    @* ======>>> LOADING PANEL ==============>>> *@
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(255, 255, 255, .8); /*url('http://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;*/
+        }
+
+        /* When the body has the loading class, we turn
+                the scrollbar off with overflow:hidden */
+        body.loading .modal {
+            overflow: hidden;
+        }
+
+        /* Anytime the body has the loading class, our
+                modal element will be visible */
+        body.loading .modal {
+            display: block;
+        }
+    </style>
+    <script type="text/javascript">
+        showLoadingPanel = function () {
+            if (!($('body').hasClass("loading")))
+                $('body').addClass("loading");
+        };
+        hideLoadingPanel = function () {
+            if ($('body').hasClass("loading"))
+                $('body').removeClass("loading");
+        };
+    </script>
+    <div class="modal">
+        <div class="spinner-border" style="position: fixed; left: 50%; top: 50%"></div>
+    </div>
+</body>

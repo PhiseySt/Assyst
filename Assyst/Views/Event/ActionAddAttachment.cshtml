@@ -1,0 +1,91 @@
+﻿@model ActionItem
+
+@{
+    Layout = "_Layout_Popup";
+}
+
+
+<form asp-action="ActionAddAttachment" name="AddAttachmentActionForm" id="AddAttachmentActionForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <p>Выбор файла</p>
+    <div class="custom-file mb-3">
+        <input type="file" class="custom-file-input" id="customFile" name="filename">
+        <label class="custom-file-label" for="customFile">Выберите файл</label>
+    </div>
+    <div class="d-none">
+        <label asp-for="attach.name" class="control-label">Название</label>
+        <input asp-for="attach.name" class="form-control" />
+        <span asp-validation-for="attach.name" class="text-danger"></span>
+    </div>
+    <div class="d-none">
+        <label asp-for="attach.description" class="control-label">Описание вложения</label>
+        <textarea asp-for="attach.description" class="form-control" rows="7"></textarea>
+        <span asp-validation-for="attach.description" class="text-danger"></span>
+    </div>
+    <div class="d-none">
+        <label asp-for="eventId" class="control-label">Номер</label>
+        <input asp-for="eventId" class="form-control" readonly="readonly" />
+        <span asp-validation-for="eventId" class="text-danger"></span>
+    </div>
+    <div class="d-none">
+        <label asp-for="actionType.id" class="control-label">Id типа действия</label>
+        <input asp-for="actionType.id" class="form-control" readonly="readonly" />
+        <span asp-validation-for="actionType.id" class="text-danger"></span>
+    </div>
+    <div class="d-none">
+        <label asp-for="attach.filename" class="control-label">Номер</label>
+        <input asp-for="attach.filename" id="hiddenFileName" readonly="readonly" />
+        <span asp-validation-for="attach.filename" class="text-danger"></span>
+    </div>
+    <div class="d-none">
+        <label asp-for="attach.attachment" class="control-label">Номер</label>
+        <input asp-for="attach.attachment" id="hiddenAttachment" readonly="readonly" />
+        <span asp-validation-for="attach.attachment" class="text-danger"></span>
+    </div>
+</form>
+
+
+<script type="text/javascript">
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        $("#hiddenFileName").val(fileName);
+    });
+
+
+    document.querySelector("#customFile").addEventListener('change', function () {
+        var reader = new FileReader();
+        var selectedFile = this.files[0];
+        reader.onload = function () {
+            var comma = this.result.indexOf(',');
+            var base64 = this.result.substr(comma + 1);
+            $("#hiddenAttachment").val(base64);
+        }
+        reader.readAsDataURL(selectedFile);
+    }, false);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
